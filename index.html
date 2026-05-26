@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Interactive fretboard visualizer for scales, tabs, and chords — easy to use, accurate, and helpful for practice">
+    <meta name="theme-color" content="#0f172a">
+    <title>Fretboard Lab - Scale & TAB Visualizer</title>
+    <link rel="stylesheet" href="styles.css?v=20260527">
+</head>
+<body data-theme="dark">
+    <div class="app-shell">
+        <!-- Header / Welcome Section -->
+        <header class="hero-panel">
+            <div>
+                <p class="eyebrow">Welcome to Fretboard Lab</p>
+                <h1>Interactive Scale & TAB Visualizer</h1>
+                <p class="hero-copy">
+                    Choose your instrument, key, and scale. Explore the visual fretboard, practice TABs, and chords — all in one simple, accurate, and easy‑to‑use interface!
+                </p>
+            </div>
+            <div class="hero-actions">
+                <button id="themeToggle" class="btn btn-secondary" type="button">
+                    🌙 Dark mode
+                </button>
+                <button id="leftHandedToggle" class="btn btn-secondary" type="button" data-active="false">
+                    ⇄ Left-handed view
+                </button>
+                <button id="beginnerModeToggle" class="btn btn-primary" type="button" data-active="true">
+                    🎯 Beginner Mode
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Controls Section -->
+        <section class="controls-grid" aria-label="Main controls">
+            <!-- Instrument Selector -->
+            <div class="control-card">
+                <label for="instrument">1. Choose your instrument</label>
+                <select id="instrument">
+                    <option value="guitar">🎸 Guitar (6‑string)</option>
+                    <option value="bass">🎸 Bass (4‑string)</option>
+                    <option value="ukulele">🪕 Ukulele</option>
+                </select>
+            </div>
+
+            <!-- Scale Type Selector -->
+            <div class="control-card">
+                <label for="scaleType">2. Select a scale type</label>
+                <select id="scaleType">
+                    <option value="major">Major Scale</option>
+                    <option value="minor">Minor Scale</option>
+                    <option value="pentatonic">Pentatonic Scale</option>
+                    <option value="blues">Blues Scale</option>
+                    <option value="harmonicMinor">Harmonic Minor</option>
+                    <option value="melodicMinor">Melodic Minor</option>
+                    <option value="dorian">Dorian Mode</option>
+                    <option value="mixolydian">Mixolydian Mode</option>
+                    <option value="lydian">Lydian Mode</option>
+                    <option value="phrygian">Phrygian Mode</option>
+                    <option value="locrian">Locrian Mode</option>
+                    <option value="chromatic">Chromatic Scale</option>
+                    <option value="custom">Custom / User Scale</option>
+                </select>
+            </div>
+
+            <!-- Key Selector -->
+            <div class="control-card">
+                <label for="rootNote">3. Choose the key (root note)</label>
+                <select id="rootNote">
+                    <option value="C">C</option>
+                    <option value="C#">C# / Db</option>
+                    <option value="D">D</option>
+                    <option value="D#">D# / Eb</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="F#">F# / Gb</option>
+                    <option value="G">G</option>
+                    <option value="G#">G# / Ab</option>
+                    <option value="A">A</option>
+                    <option value="A#">A# / Bb</option>
+                    <option value="B">B</option>
+                </select>
+            </div>
+
+            <!-- Starting Fret -->
+            <div class="control-card">
+                <label for="startingFret">4. Starting fret</label>
+                <input type="number" id="startingFret" min="0" max="24" value="0">
+            </div>
+
+            <!-- Show Triangle Pattern Checkbox -->
+            <div class="control-card checkbox-card">
+                <label class="checkbox-label" for="showTriangle">
+                    <input type="checkbox" id="showTriangle" checked>
+                    <span>Highlight position shape</span>
+                </label>
+            </div>
+
+            <!-- Show Passing Notes Checkbox -->
+            <div class="control-card checkbox-card">
+                <label class="checkbox-label" for="showPassingNotes">
+                    <input type="checkbox" id="showPassingNotes" checked>
+                    <span>Show passing notes</span>
+                </label>
+            </div>
+
+            <!-- Custom Scale Input -->
+            <div class="control-card full-width">
+                <label for="customScaleInput">Custom scale intervals</label>
+                <div class="custom-scale-row">
+                    <input id="customScaleInput" type="text" placeholder="Example: 0,2,4,5,7,9,11" value="0,2,4,5,7,9,11">
+                    <button id="applyCustomScale" class="btn btn-primary" type="button">
+                        Apply custom scale
+                    </button>
+                </div>
+                <p class="helper-text">
+                    Enter semitone offsets from 0–11 separated by commas or spaces (0 is the root note).
+                </p>
+            </div>
+        </section>
+
+        <!-- Playback Controls -->
+        <section class="practice-toolbar" aria-label="Audio playback">
+            <div class="toolbar-group">
+                <button id="playScale" class="btn btn-primary" type="button">
+                    ▶ Play scale
+                </button>
+                <button id="playTriangle" class="btn btn-secondary" type="button">
+                    🔺 Play shape
+                </button>
+                <button id="stopAudio" class="btn btn-danger" type="button">
+                    ⏹ Stop
+                </button>
+            </div>
+            <div class="toolbar-group tempo-group">
+                <label for="tempo">
+                    Tempo <span id="tempoValue">120</span> BPM
+                </label>
+                <input type="range" id="tempo" min="60" max="180" value="120">
+            </div>
+        </section>
+
+        <!-- Current Scale Info -->
+        <section class="info-strip" aria-label="Current scale information">
+            <div class="info-card">
+                <p class="eyebrow">What you're practicing</p>
+                <h2 id="currentScale">C Major Scale</h2>
+                <p id="scaleNotes">Notes: C, D, E, F, G, A, B</p>
+                <p id="scaleIntervals" class="scale-intervals">
+                    Intervals: 1 · 2 · 3 · 4 · 5 · 6 · 7
+                </p>
+            </div>
+            <div class="info-card">
+                <p class="eyebrow">Quick guide</p>
+                <p id="scaleSummary">
+                    Roots are in orange, chord tones in purple, scale notes in blue, and passing notes in gray.
+                </p>
+            </div>
+        </section>
+
+        <!-- Fretboard Display -->
+        <section class="fretboard-shell" aria-label="Interactive fretboard">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Interactive Fretboard</p>
+                    <h2>Note Map & Position Shapes</h2>
+                </div>
+                <p class="section-copy">
+                    Click any note to hear it. The legend below explains what each color means.
+                </p>
+            </div>
+            <div class="fretboard-container">
+                <div id="fretboard" class="fretboard"></div>
+            </div>
+            <div class="legend-row" aria-label="Legend">
+                <span><i class="legend-dot root"></i> Root note</span>
+                <span><i class="legend-dot scale"></i> Scale note</span>
+                <span><i class="legend-dot passing"></i> Passing note</span>
+                <span><i class="legend-dot chord"></i> Chord tone</span>
+            </div>
+        </section>
+
+        <!-- Scale Patterns and Tabs Section -->
+        <section class="panels-grid" aria-label="Scale patterns and TAB">
+            <div class="panel-card">
+                <div class="section-heading compact">
+                    <div>
+                        <p class="eyebrow">Scale Patterns</p>
+                        <h2>Position Boxes & Movement</h2>
+                    </div>
+                </div>
+                <div id="scalePatternGrid" class="pattern-grid"></div>
+                <div class="movement-grid">
+                    <div class="movement-card">
+                        <h3>Horizontal Movement</h3>
+                        <p id="horizontalMovementCopy">
+                            Stay in one box and move up the neck.
+                        </p>
+                    </div>
+                    <div class="movement-card">
+                        <h3>Vertical Movement</h3>
+                        <p id="verticalMovementCopy">
+                            Shift the pattern to neighboring strings.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-card">
+                <div class="section-heading compact">
+                    <div>
+                        <p class="eyebrow">Practice TAB</p>
+                        <h2>TAB Patterns & Fingerings</h2>
+                    </div>
+                </div>
+                <div class="tab-controls" role="tablist" aria-label="TAB exercise options">
+                    <button id="tabAsc" class="btn btn-secondary tab-toggle active" type="button" role="tab">
+                        Ascending
+                    </button>
+                    <button id="tabDesc" class="btn btn-secondary tab-toggle" type="button" role="tab">
+                        Descending
+                    </button>
+                    <button id="tabPick" class="btn btn-secondary tab-toggle" type="button" role="tab">
+                        Chords & Arpeggios
+                    </button>
+                </div>
+                <div class="tab-output-shell">
+                    <pre id="tabOutput" class="tab-output"></pre>
+                </div>
+                <div class="tab-meta" id="tabMeta"></div>
+                <div class="tab-actions">
+                    <button id="downloadTabs" class="btn btn-primary" type="button">
+                        ⬇ Download TAB
+                    </button>
+                    <button id="printTabs" class="btn btn-secondary" type="button">
+                        🖨 Print TAB
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chords Section -->
+        <section class="chord-panel" aria-label="Chords">
+            <div class="section-heading compact">
+                <div>
+                    <p class="eyebrow">Chords for this key</p>
+                    <h2>Suggested Chords</h2>
+                </div>
+                <p class="section-copy">
+                    Tap any chord to preview it on the fretboard!
+                </p>
+            </div>
+            <div id="suggestedChords" class="suggested-chords"></div>
+            <div class="chord-detail-card">
+                <div>
+                    <p class="eyebrow">Selected chord</p>
+                    <h3 id="selectedChordTone">Select a chord</h3>
+                </div>
+                <p id="selectedChordNotes" class="chord-note-list">
+                    Choose a suggestion to preview.
+                </p>
+                <p id="selectedChordHint" class="chord-hint">
+                    The fretboard will highlight chord tones and finger positions.
+                </p>
+                <div id="chordDiagram" class="chord-diagram"></div>
+            </div>
+            <div class="transition-card" id="transitionCard">
+                <div class="section-heading compact">
+                    <div>
+                        <p class="eyebrow">Chord Transitions</p>
+                        <h3>Smooth Tips & Techniques</h3>
+                    </div>
+                </div>
+                <div id="transitionTips" class="transition-tips">
+                    <p class="helper-text">Select a progression to see transition tips!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Piano Keyboard Section -->
+        <section class="piano-shell" aria-label="Interactive piano keyboard">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Piano Keyboard</p>
+                    <h2>Visualize the Key on Piano</h2>
+                </div>
+                <p class="section-copy">
+                    Click keys to hear them, see which notes are in your scale!
+                </p>
+            </div>
+            <div class="piano-container">
+                <div id="piano" class="piano"></div>
+            </div>
+        </section>
+
+        <!-- "Why It Sounds Good" Section -->
+        <section class="explanation-panel" aria-label="Music theory explanations">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Music Theory Made Easy</p>
+                    <h2>Why This Sounds Good</h2>
+                </div>
+                <p class="section-copy">
+                    Learn about chord relationships, tension, and resolution!
+                </p>
+            </div>
+            <div id="explanationContent" class="explanation-content">
+                <p class="helper-text">Select a chord progression to see the explanation!</p>
+            </div>
+        </section>
+
+        <!-- Note Combination Guide Section -->
+        <section class="note-combo-panel" aria-label="Note combination guide">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Note Combination Guide</p>
+                    <h2>Simple, Beautiful Note Pairs</h2>
+                </div>
+                <p class="section-copy">
+                    These note pairs sound amazing together! Learn which ones create harmony, emotion, brightness, and tension!
+                </p>
+            </div>
+            <div id="noteComboContent" class="note-combo-content">
+                <div class="improv-grid">
+                    <div class="improv-card">
+                        <h3>✨ Bright & Happy</h3>
+                        <p id="brightNotes">Root + 3rd, Root + 5th, 3rd + 5th</p>
+                    </div>
+                    <div class="improv-card">
+                        <h3>💔 Emotional & Tender</h3>
+                        <p id="emotionNotes">Root + 7th, 3rd + 7th, 5th + 7th</p>
+                    </div>
+                    <div class="improv-card">
+                        <h3>⚡ Tense & Dramatic</h3>
+                        <p id="tenseNotes">Root + 2nd, 4th + 7th, 2nd + 6th</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bass Guitar Chord Melodies Section -->
+        <section class="chord-melodies-panel" aria-label="Bass guitar chord melodies">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Bass Guitar Chord Melodies</p>
+                    <h2>Beautiful Chord Melody Ideas (A to G)</h2>
+                </div>
+                <p class="section-copy">
+                    Chord melodies for bass guitar, covering keys from A to G! Combine chords and melody into one bass part!
+                </p>
+            </div>
+            <div id="chordMelodiesContent" class="chord-melodies-content">
+                <div class="improv-card">
+                    <h3>Chord Melody Example</h3>
+                    <pre class="tab-output">
+e|----------------|
+B|------1---------|
+G|----0---0-------|
+D|--2-------------|
+A|3---------------|
+E|----------------|
+   Simple Chord Melody
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Guitar TAB Examples Section -->
+        <section class="tab-examples-panel" aria-label="Guitar TAB examples">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Guitar TAB Examples</p>
+                    <h2>Playable TAB Ideas for This Key</h2>
+                </div>
+                <p class="section-copy">
+                    Here are simple, beautiful TAB patterns you can play right away!
+                </p>
+            </div>
+            <div id="tabExamplesContent" class="tab-examples-content">
+                <div class="improv-card">
+                    <h3>Simple C Major Melody</h3>
+                    <pre class="tab-output">
+e|----------------|
+B|------1---------|
+G|----0---0-------|
+D|--2-------------|
+A|3---------------|
+E|----------------|
+   C Major
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Piano Suggestions Section -->
+        <section class="piano-suggestions-panel" aria-label="Piano suggestions">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Piano Suggestions</p>
+                    <h2>Left & Right Hand Ideas</h2>
+                </div>
+                <p class="section-copy">
+                    Easy piano patterns for beginners and advanced players!
+                </p>
+            </div>
+            <div id="pianoSuggestionsContent" class="piano-suggestions-content">
+                <div class="improv-grid">
+                    <div class="improv-card">
+                        <h3>🖐️ Left Hand (Bass Notes)</h3>
+                        <p id="pianoLeftHand">Play the root note of each chord</p>
+                    </div>
+                    <div class="improv-card">
+                        <h3>🖐️ Right Hand (Melodies)</h3>
+                        <p id="pianoRightHand">Try: Root → 3rd → 5th, or 5th → 6th → 5th → 3rd</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Play Style Helper Section -->
+        <section class="play-style-panel" aria-label="Play style helper">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Play Style Helper</p>
+                    <h2>Techniques to Make It Sound Great</h2>
+                </div>
+                <p class="section-copy">
+                    Use these techniques to add personality and feeling to your playing!
+                </p>
+            </div>
+            <div class="improv-grid">
+                <div class="improv-card">
+                    <h3>🎸 Guitar Techniques</h3>
+                    <p>
+                        <strong>/</strong> = Slide Up<br>
+                        <strong>\</strong> = Slide Down<br>
+                        <strong>h</strong> = Hammer-On<br>
+                        <strong>p</strong> = Pull-Off<br>
+                        <strong>PM</strong> = Palm Mute<br>
+                        <strong>v</strong> = Vibrato<br>
+                        <strong>x</strong> = Muted/Slap
+                    </p>
+                </div>
+                <div class="improv-card">
+                    <h3>🎹 Piano Techniques</h3>
+                    <p>
+                        <strong>Legato</strong> = Smooth, connected notes<br>
+                        <strong>Staccato</strong> = Short, detached notes<br>
+                        <strong>Chords</strong> = Play notes together<br>
+                        <strong>Arpeggios</strong> = Play notes one after another
+                    </p>
+                </div>
+                <div class="improv-card">
+                    <h3>🎵 General Tips</h3>
+                    <p>
+                        <strong>Rhythm</strong> = Keep a steady beat<br>
+                        <strong>Dynamics</strong> = Play soft and loud<br>
+                        <strong>Space</strong> = Leave gaps between notes<br>
+                        <strong>Feeling</strong> = Play with emotion!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Improvisation Guide Section -->
+        <section class="improv-panel" aria-label="Improvisation guide">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Improvisation Guide</p>
+                    <h2>What to Play & How to Play It</h2>
+                </div>
+                <p class="section-copy">
+                    Safe notes, emotional notes, and techniques for great solos!
+                </p>
+            </div>
+            <div id="improvContent" class="improv-content">
+                <div class="improv-grid">
+                    <div class="improv-card">
+                        <h3>Safe Notes (Beginner)</h3>
+                        <p id="safeNotes">Root, 3rd, and 5th of each chord</p>
+                    </div>
+                    <div class="improv-card">
+                        <h3>Emotional Notes (Solos)</h3>
+                        <p id="emotionalNotes">7ths, 9ths, and passing tones</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Progressions Section -->
+        <section class="progression-panel" aria-label="Chord progressions">
+            <div class="section-heading compact">
+                <div>
+                    <p class="eyebrow">Practice ideas</p>
+                    <h2>Chord Progressions</h2>
+                </div>
+                <p class="section-copy">
+                    Select a progression to learn why it works!
+                </p>
+            </div>
+            <div id="progressionList" class="progression-list"></div>
+            <p id="progressionHint" class="progression-hint">
+                Select a progression to get started.
+            </p>
+        </section>
+    </div>
+
+    <script src="script.js?v=20260527"></script>
+</body>
+</html>
